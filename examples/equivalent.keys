@@ -1,0 +1,3 @@
+# Reordered entries and new comments
+restrict ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIAICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIC deploy label changed
+restrict,from="192.0.2.0/24",command="/usr/local/bin/backup --read-only" ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIAcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcH backup@example.invalid changed label
