@@ -1,0 +1,6 @@
+/bin/
+/dist/
+/installed/
+__pycache__/
+*.test
+coverage.out
