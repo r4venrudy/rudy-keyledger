@@ -24,3 +24,16 @@ func TestLibraryPolicyBounds(t *testing.T) {
 		}
 	}
 }
+
+func TestPublicOptionParserTextProfile(t *testing.T) {
+	for _, value := range []string{"nul\x00hidden", "new\nline", "carriage\rreturn", "delete\x7f", "c1\u0085", string([]byte{0xff})} {
+		if options, err := ParseOptions("command=\"" + value + "\""); err == nil || options != nil {
+			t.Fatalf("accepted unsafe option value: %q", value)
+		}
+	}
+	for _, raw := range []string{"", "restrict", "command=\"tab\tinside\"", "command=\"日本語\""} {
+		if _, err := ParseOptions(raw); err != nil {
+			t.Fatal(raw, err)
+		}
+	}
+}

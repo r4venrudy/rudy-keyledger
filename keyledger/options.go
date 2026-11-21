@@ -3,6 +3,7 @@ package keyledger
 import (
 	"errors"
 	"strings"
+	"unicode/utf8"
 )
 
 // Option retains order and repeated values. Names are case-insensitive in OpenSSH.
@@ -37,6 +38,14 @@ func firstField(line string) (field, rest string, err error) {
 // ParseOptions checks the authorized_keys option grammar. Semantic checks on
 // option values (host patterns, command execution, expiry times) belong to sshd.
 func ParseOptions(raw string) ([]Option, error) {
+	if !utf8.ValidString(raw) {
+		return nil, errors.New("option field must be UTF-8")
+	}
+	for _, c := range raw {
+		if (c < 32 && c != '\t') || (c >= 0x7f && c <= 0x9f) {
+			return nil, errors.New("option field contains a control character")
+		}
+	}
 	if raw == "" {
 		return []Option{}, nil
 	}
