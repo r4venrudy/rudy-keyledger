@@ -85,7 +85,7 @@ if err != nil { return err }
 delta := keyledger.Compare(old, next)
 ```
 
-Import `github.com/r4venrudy/rudy-keyledger/keyledger`. `Read` returns an error for the entire file if any record is unsupported or malformed. `Compare` expects inventories produced by successful `Read` calls. JSON schemas are `rudy.keyledger.inventory/v1` and `rudy.keyledger.diff/v1`.
+Import `github.com/r4venrudy/rudy-keyledger/keyledger`. `Policy.MinRSABits` must be zero (the 2048-bit default) or between 1024 and 16384. Invalid policy settings fail before reading input. `Read` returns an error for the entire file if any record is unsupported or malformed. `Compare` expects inventories produced by successful `Read` calls. JSON schemas are `rudy.keyledger.inventory/v1` and `rudy.keyledger.diff/v1`.
 
 ## Analysis boundaries
 

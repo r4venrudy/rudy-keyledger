@@ -43,6 +43,9 @@ type Inventory struct {
 // Read parses a bounded UTF-8 authorized_keys file without executing commands or
 // consulting the network. Invalid and unsupported records fail the entire read.
 func Read(reader io.Reader, policy Policy) (Inventory, error) {
+	if policy.MinRSABits != 0 && (policy.MinRSABits < 1024 || policy.MinRSABits > 16384) {
+		return Inventory{}, errors.New("MinRSABits must be zero (default) or between 1024 and 16384")
+	}
 	result := Inventory{Schema: "rudy.keyledger.inventory/v1", Entries: []Entry{}, Issues: []Issue{}}
 	data, err := io.ReadAll(io.LimitReader(reader, MaxInputBytes+1))
 	if err != nil {
