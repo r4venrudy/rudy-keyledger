@@ -124,7 +124,7 @@ var flagOptions = map[string]bool{
 	"restrict": true, "cert-authority": true, "agent-forwarding": true, "no-agent-forwarding": true,
 	"port-forwarding": true, "no-port-forwarding": true, "pty": true, "no-pty": true,
 	"user-rc": true, "no-user-rc": true, "x11-forwarding": true, "no-x11-forwarding": true,
-	"no-touch-required": true, "verify-required": true,
+	"touch-required": true, "no-touch-required": true, "verify-required": true, "no-verify-required": true,
 }
 var valueOptions = map[string]bool{
 	"command": true, "from": true, "environment": true, "permitopen": true,
@@ -151,7 +151,14 @@ func review(entries []Entry, policy Policy) []Issue {
 			seen[entry.Fingerprint] = entry.Line
 		}
 		restricted := false
+		singletons := map[string]bool{}
 		for _, option := range entry.Options {
+			if option.Value != nil && (option.Name == "command" || option.Name == "from" || option.Name == "principals") {
+				if singletons[option.Name] {
+					add("repeated-option", "OpenSSH rejects repeated clauses for option: "+option.Name)
+				}
+				singletons[option.Name] = true
+			}
 			if !flagOptions[option.Name] && !valueOptions[option.Name] {
 				add("unknown-option", "option is outside this preview's known option list: "+option.Name)
 			}

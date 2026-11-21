@@ -37,3 +37,33 @@ func TestPublicOptionParserTextProfile(t *testing.T) {
 		}
 	}
 }
+
+func TestOpenSSHOptionDiagnostics(t *testing.T) {
+	key := " ssh-ed25519 " + ed(7)
+	for _, name := range []string{"command", "from", "principals"} {
+		result, err := Read(strings.NewReader(name+"=\"one\","+strings.ToUpper(name)+"=\"two\""+key), Policy{})
+		if err != nil {
+			t.Fatal(err)
+		}
+		if len(result.Issues) != 1 || result.Issues[0].Code != "repeated-option" {
+			t.Fatalf("expected duplicate singleton warning for %s: %+v", name, result.Issues)
+		}
+		if len(result.Entries[0].Options) != 2 {
+			t.Fatal("diagnostics discarded an option")
+		}
+	}
+	for _, options := range []string{
+		"touch-required,no-touch-required,verify-required,no-verify-required",
+		"expiry-time=\"20990101\",expiry-time=\"20980101\"",
+		"tunnel=\"1\",tunnel=\"2\"",
+		"permitopen=\"host:22\",permitopen=\"host:80\"",
+		"permitlisten=\"22\",permitlisten=\"80\"",
+		"environment=\"A=1\",environment=\"A=2\"",
+		"restrict,pty,restrict",
+	} {
+		result, err := Read(strings.NewReader(options+key), Policy{})
+		if err != nil || len(result.Issues) != 0 {
+			t.Fatal(options, result.Issues, err)
+		}
+	}
+}

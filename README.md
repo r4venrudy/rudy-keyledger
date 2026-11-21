@@ -56,7 +56,7 @@ cat ./proposed_keys | keyledger diff --before ./approved_keys --after - --format
 | 1 | Authorization drift, or policy warnings with `--fail-on-warning`. A complete report is emitted. |
 | 2 | Invalid/unsupported input, argument, file or output error. No partial success JSON is emitted. |
 
-Policy warnings cover RSA below the selected size (2048 bits by default), duplicate key records, unknown option names, unexpected bare/value forms, and the optional `restrict`/CA policies. `--require-restrict` requires an explicit flag; it does not infer equivalent configurations.
+Policy warnings cover RSA below the selected size (2048 bits by default), duplicate key records, unknown option names, unexpected bare/value forms, repeated `command`/`from`/`principals` clauses, and the optional `restrict`/CA policies. `--require-restrict` requires an explicit flag; it does not infer equivalent configurations.
 
 ## Build and test
 
@@ -95,7 +95,7 @@ This preview accepts UTF-8 files up to 8 MiB, 8192 bytes per line, 16384 entries
 
 Certificates, DSA, FIDO/security-key records and post-quantum/hybrid algorithms are outside this preview and fail the entire read. A `cert-authority` option on a supported ordinary public key is retained and can be forbidden by policy.
 
-Option order within one record remains significant to the comparison. Changing it is conservatively reported even when a particular sshd version would treat it as equivalent. Repeated key records are compared as a multiset, never reduced to one fingerprint. Unknown options are preserved with a warning. KeyLedger does not evaluate host patterns, expiry times, forced-command semantics, sshd configuration, file permissions, principals, revocation files or effective login permissions. Confirm deployment behavior against your sshd configuration.
+Option order within one record remains significant to the comparison. Changing it is conservatively reported even when a particular sshd version would treat it as equivalent. Repeated key records are compared as a multiset, never reduced to one fingerprint. Unknown options are preserved with a warning. Both `touch-required` and `no-verify-required` are recognized. Repeated `command`, `from` and `principals` values are retained with a warning because OpenSSH rejects those duplicates; other repeated options are not classified as singleton errors. See the [OpenSSH option parser](https://github.com/openssh/openssh-portable/blob/master/auth-options.c). KeyLedger does not evaluate host patterns, expiry times, forced-command semantics, sshd configuration, file permissions, principals, revocation files or effective login permissions. Confirm deployment behavior against your sshd configuration.
 
 The parser profile follows the [OpenSSH authorized_keys format](https://man.openbsd.org/sshd.8#AUTHORIZED_KEYS_FILE_FORMAT). Key layouts are defined by [RFC 4253](https://www.rfc-editor.org/rfc/rfc4253#section-6.6), [RFC 5656](https://www.rfc-editor.org/rfc/rfc5656#section-3.1), and [RFC 8709](https://www.rfc-editor.org/rfc/rfc8709#section-4). The synthetic public fixtures are for parser tests and documentation; never use them to grant access.
 
