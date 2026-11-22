@@ -76,6 +76,11 @@ with TemporaryDirectory() as directory:
     ca = folder / "ca.keys"
     ca.write_text("cert-authority " + (root / "examples/algorithms.keys").read_text().splitlines()[0] + "\n")
     assert inspect(ca, "--forbid-ca", "--fail-on-warning", code=1)["issues"][0]["code"] == "ca-forbidden"
+    environment = folder / "environment.keys"
+    environment.write_text('environment="MISSING_EQUALS" ' + (root / "examples/algorithms.keys").read_text().splitlines()[0] + "\n")
+    assert inspect(environment, "--fail-on-warning", code=1)["issues"][0]["code"] == "environment-syntax"
+    environment.write_text('environment="3_OK=has=equals" ' + (root / "examples/algorithms.keys").read_text().splitlines()[0] + "\n")
+    assert inspect(environment, "--fail-on-warning")["issues"] == []
     malformed = folder / "malformed.keys"
     for value in ("ssh-ed25519 !", "ssh-dss AAAA", "# nul\0", "\ufeff# bom", "#" * 8193, 'command="unterminated'):
         malformed.write_text(value, encoding="utf-8")

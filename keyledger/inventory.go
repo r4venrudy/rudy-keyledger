@@ -155,6 +155,11 @@ func review(entries []Entry, policy Policy) []Issue {
 		restricted := false
 		singletons := map[string]bool{}
 		for _, option := range entry.Options {
+			if option.Name == "environment" && option.Value != nil {
+				if _, valid := environmentName(*option.Value); !valid {
+					add("environment-syntax", "environment assignment requires a nonempty ASCII alphanumeric/underscore name followed by =")
+				}
+			}
 			if option.Value != nil && (option.Name == "command" || option.Name == "from" || option.Name == "principals") {
 				if singletons[option.Name] {
 					add("repeated-option", "OpenSSH rejects repeated clauses for option: "+option.Name)
@@ -177,4 +182,19 @@ func review(entries []Entry, policy Policy) []Issue {
 		}
 	}
 	return issues
+}
+
+// environmentName follows the OpenSSH name grammar; values remain opaque.
+func environmentName(value string) (string, bool) {
+	name, _, found := strings.Cut(value, "=")
+	if !found || name == "" {
+		return "", false
+	}
+	for i := 0; i < len(name); i++ {
+		c := name[i]
+		if !(c >= 'a' && c <= 'z' || c >= 'A' && c <= 'Z' || c >= '0' && c <= '9' || c == '_') {
+			return "", false
+		}
+	}
+	return name, true
 }

@@ -49,3 +49,22 @@ func TestBlankLineAllocationBudget(t *testing.T) {
 		t.Fatal(result, err)
 	}
 }
+
+func TestEnvironmentAssignmentSyntax(t *testing.T) {
+	key := " ssh-ed25519 " + ed(7)
+	for _, value := range []string{"NO_EQUALS", "=empty-name", "BAD-NAME=value", "NAME SPACE=value", "\u00c9=value"} {
+		result, err := Read(strings.NewReader("environment=\""+value+"\""+key), Policy{})
+		if err != nil {
+			t.Fatal(err)
+		}
+		if len(result.Issues) != 1 || result.Issues[0].Code != "environment-syntax" {
+			t.Fatalf("missing environment syntax warning for %q: %+v", value, result.Issues)
+		}
+	}
+	for _, value := range []string{"A=", "_A=one", "3A=value", "A=has=equals", "A=\u65e5\u672c\u8a9e"} {
+		result, err := Read(strings.NewReader("environment=\""+value+"\""+key), Policy{})
+		if err != nil || len(result.Issues) != 0 {
+			t.Fatal(value, result.Issues, err)
+		}
+	}
+}
