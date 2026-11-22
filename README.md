@@ -56,7 +56,7 @@ cat ./proposed_keys | keyledger diff --before ./approved_keys --after - --format
 | 1 | Authorization drift, or policy warnings with `--fail-on-warning`. A complete report is emitted. |
 | 2 | Invalid/unsupported input, argument, file or output error. No partial success JSON is emitted. |
 
-Environment assignment warnings require a nonempty ASCII letter/digit/underscore name and an equals sign. A leading digit is allowed, matching OpenSSH; values remain opaque.
+Environment assignment warnings require a nonempty ASCII letter/digit/underscore name and an equals sign. A leading digit is allowed, matching OpenSSH; values remain opaque. Repeating the same variable name on one key emits `environment-shadowed` because OpenSSH keeps the first assignment. Names are case-sensitive, and checks are scoped to one key record. All options remain in the evidence.
 
 Policy warnings cover malformed environment assignments, RSA below the selected size (2048 bits by default), duplicate key records, unknown option names, unexpected bare/value forms, repeated `command`/`from`/`principals` clauses, and the optional `restrict`/CA policies. `--require-restrict` requires an explicit flag; it does not infer equivalent configurations.
 

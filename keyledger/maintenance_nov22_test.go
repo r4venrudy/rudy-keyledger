@@ -13,7 +13,6 @@ func TestOptionBudgetBeforeTextValidation(t *testing.T) {
 			t.Fatalf("oversized option did not reach byte budget first: %v", err)
 		}
 	}
-	_, _, _, _ = runtime.GOOS, runtime.GOARCH, strings.Builder{}, 0
 }
 
 func BenchmarkOversizedOptions(b *testing.B) {
@@ -65,6 +64,30 @@ func TestEnvironmentAssignmentSyntax(t *testing.T) {
 		result, err := Read(strings.NewReader("environment=\""+value+"\""+key), Policy{})
 		if err != nil || len(result.Issues) != 0 {
 			t.Fatal(value, result.Issues, err)
+		}
+	}
+}
+
+func TestEnvironmentShadowing(t *testing.T) {
+	key := " ssh-ed25519 " + ed(7)
+	result, err := Read(strings.NewReader("environment=\"A=first\",environment=\"A=second\""+key), Policy{})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(result.Issues) != 1 || result.Issues[0].Code != "environment-shadowed" {
+		t.Fatalf("missing first-assignment warning: %+v", result.Issues)
+	}
+	if len(result.Entries[0].Options) != 2 || *result.Entries[0].Options[1].Value != "A=second" {
+		t.Fatal("lost evidence")
+	}
+	for _, text := range []string{
+		"environment=\"A=one\",environment=\"a=two\"" + key,
+		"environment=\"A=one\",environment=\"B=two\"" + key,
+		"environment=\"A=one\"" + key + "\nenvironment=\"A=two\" ssh-ed25519 " + ed(2),
+	} {
+		result, err = Read(strings.NewReader(text), Policy{})
+		if err != nil || len(result.Issues) != 0 {
+			t.Fatal(result.Issues, err)
 		}
 	}
 }

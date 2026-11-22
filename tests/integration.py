@@ -81,6 +81,10 @@ with TemporaryDirectory() as directory:
     assert inspect(environment, "--fail-on-warning", code=1)["issues"][0]["code"] == "environment-syntax"
     environment.write_text('environment="3_OK=has=equals" ' + (root / "examples/algorithms.keys").read_text().splitlines()[0] + "\n")
     assert inspect(environment, "--fail-on-warning")["issues"] == []
+    environment.write_text('environment="A=one",environment="A=two" ' + (root / "examples/algorithms.keys").read_text().splitlines()[0] + "\n")
+    assert inspect(environment, "--fail-on-warning", code=1)["issues"][0]["code"] == "environment-shadowed"
+    environment.write_text('environment="A=one",environment="a=two" ' + (root / "examples/algorithms.keys").read_text().splitlines()[0] + "\n")
+    assert inspect(environment, "--fail-on-warning")["issues"] == []
     malformed = folder / "malformed.keys"
     for value in ("ssh-ed25519 !", "ssh-dss AAAA", "# nul\0", "\ufeff# bom", "#" * 8193, 'command="unterminated'):
         malformed.write_text(value, encoding="utf-8")

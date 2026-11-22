@@ -154,10 +154,16 @@ func review(entries []Entry, policy Policy) []Issue {
 		}
 		restricted := false
 		singletons := map[string]bool{}
+		environmentSeen := map[string]bool{}
 		for _, option := range entry.Options {
 			if option.Name == "environment" && option.Value != nil {
-				if _, valid := environmentName(*option.Value); !valid {
+				if name, valid := environmentName(*option.Value); !valid {
 					add("environment-syntax", "environment assignment requires a nonempty ASCII alphanumeric/underscore name followed by =")
+				} else {
+					if environmentSeen[name] {
+						add("environment-shadowed", "earlier environment assignment wins for variable: "+name)
+					}
+					environmentSeen[name] = true
 				}
 			}
 			if option.Value != nil && (option.Name == "command" || option.Name == "from" || option.Name == "principals") {

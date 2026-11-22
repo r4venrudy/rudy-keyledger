@@ -58,7 +58,7 @@ func TestOpenSSHOptionDiagnostics(t *testing.T) {
 		"tunnel=\"1\",tunnel=\"2\"",
 		"permitopen=\"host:22\",permitopen=\"host:80\"",
 		"permitlisten=\"22\",permitlisten=\"80\"",
-		"environment=\"A=1\",environment=\"A=2\"",
+		"environment=\"A=1\",environment=\"B=2\"",
 		"restrict,pty,restrict",
 	} {
 		result, err := Read(strings.NewReader(options+key), Policy{})
