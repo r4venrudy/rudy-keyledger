@@ -38,6 +38,9 @@ func firstField(line string) (field, rest string, err error) {
 // ParseOptions checks the authorized_keys option grammar. Semantic checks on
 // option values (host patterns, command execution, expiry times) belong to sshd.
 func ParseOptions(raw string) ([]Option, error) {
+	if len(raw) > 8192 {
+		return nil, errors.New("option field exceeds 8192 bytes")
+	}
 	if !utf8.ValidString(raw) {
 		return nil, errors.New("option field must be UTF-8")
 	}
@@ -48,9 +51,6 @@ func ParseOptions(raw string) ([]Option, error) {
 	}
 	if raw == "" {
 		return []Option{}, nil
-	}
-	if len(raw) > 8192 {
-		return nil, errors.New("option field exceeds 8192 bytes")
 	}
 	result := []Option{}
 	for len(raw) > 0 {
