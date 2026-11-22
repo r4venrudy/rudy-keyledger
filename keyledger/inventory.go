@@ -61,13 +61,15 @@ func Read(reader io.Reader, policy Policy) (Inventory, error) {
 	if bytes.HasPrefix(data, []byte{0xef, 0xbb, 0xbf}) {
 		return Inventory{}, errors.New("UTF-8 BOM is outside the authorized_keys preview profile")
 	}
-	for i, raw := range strings.Split(string(data), "\n") {
+	lineNumber := 0
+	for raw := range strings.SplitSeq(string(data), "\n") {
+		lineNumber++
 		if len(raw) > MaxLineBytes {
-			return Inventory{}, fmt.Errorf("line %d exceeds 8192 bytes", i+1)
+			return Inventory{}, fmt.Errorf("line %d exceeds 8192 bytes", lineNumber)
 		}
 		for _, c := range raw {
 			if (c < 32 && c != '\t') || (c >= 0x7f && c <= 0x9f) {
-				return Inventory{}, fmt.Errorf("line %d contains a control character", i+1)
+				return Inventory{}, fmt.Errorf("line %d contains a control character", lineNumber)
 			}
 		}
 		line := strings.Trim(raw, " \t")
@@ -79,9 +81,9 @@ func Read(reader io.Reader, policy Policy) (Inventory, error) {
 		}
 		entry, err := parseEntry(line)
 		if err != nil {
-			return Inventory{}, fmt.Errorf("line %d: %w", i+1, err)
+			return Inventory{}, fmt.Errorf("line %d: %w", lineNumber, err)
 		}
-		entry.Line = i + 1
+		entry.Line = lineNumber
 		result.Entries = append(result.Entries, entry)
 	}
 	result.Issues = review(result.Entries, policy)
