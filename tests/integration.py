@@ -70,6 +70,16 @@ with TemporaryDirectory() as directory:
         output=subprocess.check_output([ssh_keygen,'-lf',security,'-E','sha256'],text=True,timeout=10)
         assert output.split()[1]==entry['fingerprint'] and int(output.split()[0])==256,output
         oracle_checks+=1
+
+    security=root/'examples/security-ecdsa.keys'
+    entry=inspect(security)['entries'][0]
+    assert entry['algorithm']=='sk-ecdsa-sha2-nistp256@openssh.com' and entry['bits']==256
+    public=security.read_text().split()[1]
+    assert entry['fingerprint']=='SHA256:'+base64.b64encode(sha256(base64.b64decode(public)).digest()).decode().rstrip('=')
+    if ssh_keygen:
+        output=subprocess.check_output([ssh_keygen,'-lf',security,'-E','sha256'],text=True,timeout=10)
+        assert output.split()[1]==entry['fingerprint'] and int(output.split()[0])==256,output
+        oracle_checks+=1
     empty = folder / "empty.keys"
     empty.write_text("# intentionally empty\n")
     added = diff(empty, before, code=1)
@@ -103,5 +113,5 @@ with TemporaryDirectory() as directory:
     assert run("inspect", "--input", malformed, code=2) == ""
     run("inspect", "--input", folder, code=2)
     run("inspect", "--input", folder / "does-not-exist", code=2)
-assert oracle_checks in (0, 6)
+assert oracle_checks in (0, 7)
 print(f"{checks} integration checks passed; {oracle_checks} OpenSSH fingerprint comparisons")

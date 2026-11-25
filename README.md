@@ -15,7 +15,7 @@ A key can keep the same fingerprint while losing its forced command or forwardin
 | Layer | Behavior |
 | --- | --- |
 | Key decoding | Parse SSH wire strings, match the advertised algorithm, reject truncated/trailing data, and compute SHA-256 fingerprints. |
-| Supported keys | Ed25519, FIDO Ed25519, RSA with canonical positive integers, ECDSA nistp256/nistp384/nistp521 with on-curve uncompressed point validation. |
+| Supported keys | Ed25519, FIDO Ed25519/P-256, RSA with canonical positive integers, ECDSA nistp256/nistp384/nistp521 with on-curve uncompressed point validation. |
 | Access options | Preserve order, repeated values, quoted commas/spaces and OpenSSH-style escaped quotes; normalize option keyword case. |
 | Inventory | Line references, algorithms, sizes, comments, options, duplicate keys and configurable policy warnings. |
 | Drift | Added keys, removed keys, modified option sets and changed duplicate counts; ignore comments and record order. |
@@ -91,7 +91,7 @@ Import `github.com/r4venrudy/rudy-keyledger/keyledger`. `Policy.MinRSABits` must
 
 ## Security keys
 
-The source build supports `sk-ssh-ed25519@openssh.com` public records. Application bytes are parsed as a NUL-free SSH string and included in the SHA-256 fingerprint. Empty or non-UTF-8 applications remain structurally valid and are not rendered separately as text. This inventories public wire records; it does not prove hardware backing, user presence, signatures or possession of a token. See [OpenSSH security-key formats](https://github.com/openssh/openssh-portable/blob/master/PROTOCOL.u2f).
+The source build supports `sk-ssh-ed25519@openssh.com` and `sk-ecdsa-sha2-nistp256@openssh.com` public records. The ECDSA form requires nistp256 and an on-curve uncompressed public point; other security-key curves and certificates remain unsupported. Application bytes are parsed as a NUL-free SSH string and included in the SHA-256 fingerprint. Empty or non-UTF-8 applications remain structurally valid and are not rendered separately as text. This inventories public wire records; it does not prove hardware backing, user presence, signatures or possession of a token. See [OpenSSH security-key formats](https://github.com/openssh/openssh-portable/blob/master/PROTOCOL.u2f).
 
 ## Analysis boundaries
 
@@ -99,7 +99,7 @@ KeyLedger examines explicitly supplied public access files. It does not connect 
 
 Line iteration does not allocate a slice entry for every blank or comment line. A regression checks allocation work on a one-MiB blank input. This preview accepts UTF-8 files up to 8 MiB, 8192 bytes per line, 16384 entries and 128 options per key. Oversized option fields are rejected by byte length before text scanning. The exported option parser enforces the same UTF-8 and control-character profile as file input. Quoted tabs remain supported. CRLF is accepted; a BOM, lone CR and control characters are rejected. RSA keys must have an odd 1024–16384-bit modulus and a canonical odd exponent from 3 through 2147483647. RSA checks cover public structure, not factorization or strength beyond size. Ed25519 validation covers wire shape and length, not subgroup membership or possession of a private key.
 
-Certificates, DSA, FIDO ECDSA security-key records and post-quantum/hybrid algorithms are outside this preview and fail the entire read. A `cert-authority` option on a supported ordinary public key is retained and can be forbidden by policy.
+Certificates, DSA, post-quantum/hybrid algorithms are outside this preview and fail the entire read. A `cert-authority` option on a supported ordinary public key is retained and can be forbidden by policy.
 
 Option order within one record remains significant to the comparison. Changing it is conservatively reported even when a particular sshd version would treat it as equivalent. Repeated key records are compared as a multiset, never reduced to one fingerprint. Unknown options are preserved with a warning. Both `touch-required` and `no-verify-required` are recognized. Repeated `command`, `from` and `principals` values are retained with a warning because OpenSSH rejects those duplicates; other repeated options are not classified as singleton errors. See the [OpenSSH option parser](https://github.com/openssh/openssh-portable/blob/master/auth-options.c). KeyLedger does not evaluate host patterns, expiry times, forced-command semantics, sshd configuration, file permissions, principals, revocation files or effective login permissions. Confirm deployment behavior against your sshd configuration.
 

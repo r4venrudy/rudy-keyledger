@@ -99,9 +99,9 @@ func DecodeKey(algorithm, encoded string) (Key, error) {
 		if key.Bits < 1024 || key.Bits > 16384 || n.Bit(0) == 0 || e.Cmp(n) >= 0 {
 			return key, errors.New("RSA modulus outside supported 1024..16384-bit odd profile")
 		}
-	case "ecdsa-sha2-nistp256", "ecdsa-sha2-nistp384", "ecdsa-sha2-nistp521":
+	case "ecdsa-sha2-nistp256", "ecdsa-sha2-nistp384", "ecdsa-sha2-nistp521", "sk-ecdsa-sha2-nistp256@openssh.com":
 		curveName, err := w.field()
-		if err != nil || string(curveName) != strings.TrimPrefix(algorithm, "ecdsa-sha2-") {
+		if err != nil || string(curveName) != strings.TrimSuffix(strings.TrimPrefix(strings.TrimPrefix(algorithm, "sk-"), "ecdsa-sha2-"), "@openssh.com") {
 			return key, errors.New("ECDSA curve name disagrees with algorithm")
 		}
 		curves := map[string]elliptic.Curve{"nistp256": elliptic.P256(), "nistp384": elliptic.P384(), "nistp521": elliptic.P521()}
@@ -114,9 +114,14 @@ func DecodeKey(algorithm, encoded string) (Key, error) {
 		if x == nil || y == nil {
 			return key, errors.New("ECDSA point must be an uncompressed point on the named curve")
 		}
+		if algorithm == "sk-ecdsa-sha2-nistp256@openssh.com" {
+			if err := securityApplication(&w); err != nil {
+				return key, err
+			}
+		}
 		key.Bits = curve.Params().BitSize
 	default:
-		return key, errors.New("unsupported key algorithm (certificates, security keys and hybrid keys are outside this preview)")
+		return key, errors.New("unsupported key algorithm (certificates and hybrid keys are outside this preview)")
 	}
 	if len(w.data) != 0 {
 		return key, errors.New("trailing bytes in SSH key blob")
