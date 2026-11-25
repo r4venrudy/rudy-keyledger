@@ -2,6 +2,7 @@
 package keyledger
 
 import (
+	"bytes"
 	"crypto/elliptic"
 	"crypto/sha256"
 	"encoding/base64"
@@ -71,10 +72,15 @@ func DecodeKey(algorithm, encoded string) (Key, error) {
 		return key, errors.New("key algorithm disagrees with SSH wire blob")
 	}
 	switch algorithm {
-	case "ssh-ed25519":
+	case "ssh-ed25519", "sk-ssh-ed25519@openssh.com":
 		public, err := w.field()
 		if err != nil || len(public) != 32 {
 			return key, errors.New("Ed25519 public key must contain 32 bytes")
+		}
+		if algorithm == "sk-ssh-ed25519@openssh.com" {
+			if err := securityApplication(&w); err != nil {
+				return key, err
+			}
 		}
 		key.Bits = 256
 	case "ssh-rsa":
@@ -118,4 +124,17 @@ func DecodeKey(algorithm, encoded string) (Key, error) {
 	digest := sha256.Sum256(data)
 	key.Fingerprint = "SHA256:" + base64.RawStdEncoding.EncodeToString(digest[:])
 	return key, nil
+}
+
+// OpenSSH serializes the application as a NUL-free SSH cstring. It remains
+// opaque binary metadata included in the fingerprint, not rendered as text.
+func securityApplication(w *wire) error {
+	value, err := w.field()
+	if err != nil {
+		return err
+	}
+	if bytes.IndexByte(value, 0) >= 0 {
+		return errors.New("security-key application contains NUL")
+	}
+	return nil
 }
