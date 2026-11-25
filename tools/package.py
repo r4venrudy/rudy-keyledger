@@ -10,7 +10,7 @@ import tarfile
 from zipfile import ZIP_DEFLATED, ZipFile, ZipInfo
 
 ROOT = Path(__file__).resolve().parents[1]
-VERSION = "0.1.0-preview"
+VERSION = "0.2.0-preview"
 PLATFORMS = (
     ("linux", "amd64", "linux-x64"),
     ("darwin", "arm64", "macos-arm64"),

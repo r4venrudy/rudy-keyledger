@@ -26,7 +26,7 @@ def inspect(path, *flags, code=0, data=None):
 def diff(before, after, *flags, code=0, data=None):
     return json.loads(run("diff", "--before", before, "--after", after, "--format", "json", *flags, code=code, data=data))
 
-assert run("--version").strip() == "keyledger 0.1.0-preview"
+assert run("--version").strip() == "keyledger 0.2.0-preview"
 assert "SSH" in run("--help")
 before, after = root / "examples/before.keys", root / "examples/after.keys"
 base = inspect(before, "--require-restrict", "--fail-on-warning")
@@ -80,6 +80,14 @@ with TemporaryDirectory() as directory:
         output=subprocess.check_output([ssh_keygen,'-lf',security,'-E','sha256'],text=True,timeout=10)
         assert output.split()[1]==entry['fingerprint'] and int(output.split()[0])==256,output
         oracle_checks+=1
+
+    security=root/'examples/security-ed25519.keys'
+    report=inspect(security,'--require-user-verification','--fail-on-warning',code=1)
+    assert report['issues'][0]['code']=='sk-verification-required'
+    verified=folder/'verified.keys';verified.write_text('verify-required '+security.read_text())
+    assert inspect(verified,'--require-user-verification','--fail-on-warning')['issues']==[]
+    assert diff(security,verified,'--require-user-verification','--fail-on-warning',code=1)['changed']
+    assert not diff(verified,verified,'--require-user-verification','--fail-on-warning')['changed']
     empty = folder / "empty.keys"
     empty.write_text("# intentionally empty\n")
     added = diff(empty, before, code=1)

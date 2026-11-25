@@ -80,3 +80,30 @@ func TestSecurityECDSAMalformedPoint(t *testing.T) {
 		}
 	}
 }
+
+func TestSecurityVerificationPolicy(t *testing.T) {
+	algorithm := "sk-ssh-ed25519@openssh.com"
+	line := algorithm + " " + encoded([]byte(algorithm), bytes.Repeat([]byte{7}, 32), []byte("ssh:"))
+	result, err := Read(strings.NewReader(line), Policy{RequireUserVerification: true})
+	if err != nil || len(result.Issues) != 1 || result.Issues[0].Code != "sk-verification-required" {
+		t.Fatal(result, err)
+	}
+	for _, prefix := range []string{"verify-required ", "VERIFY-REQUIRED,restrict "} {
+		result, err = Read(strings.NewReader(prefix+line), Policy{RequireUserVerification: true})
+		if err != nil || len(result.Issues) != 0 {
+			t.Fatal(result, err)
+		}
+	}
+	result, err = Read(strings.NewReader("verify-required=\"yes\" "+line), Policy{RequireUserVerification: true})
+	if err != nil || len(result.Issues) != 2 {
+		t.Fatal(result, err)
+	}
+	result, err = Read(strings.NewReader("ssh-ed25519 "+ed(7)), Policy{RequireUserVerification: true})
+	if err != nil || len(result.Issues) != 0 {
+		t.Fatal(result, err)
+	}
+	result, err = Read(strings.NewReader(line+"\nverify-required "+line), Policy{RequireUserVerification: true})
+	if err != nil || len(result.Issues) != 2 {
+		t.Fatal(result, err)
+	}
+}

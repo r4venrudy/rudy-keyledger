@@ -11,7 +11,7 @@ import (
 	"github.com/r4venrudy/rudy-keyledger/keyledger"
 )
 
-const version = "0.1.0-preview"
+const version = "0.2.0-preview"
 
 func main() { os.Exit(run(os.Args[1:], os.Stdin, os.Stdout, os.Stderr)) }
 
@@ -25,7 +25,7 @@ func run(args []string, stdin io.Reader, stdout, stderr io.Writer) int {
 		return 0
 	}
 	if len(args) == 0 || args[0] == "--help" || args[0] == "help" {
-		_, err := fmt.Fprintln(stdout, "KeyLedger — offline SSH access inventory and drift checks\n\nkeyledger inspect --input authorized_keys [--format json] [--fail-on-warning]\nkeyledger diff --before old_keys --after new_keys [--format json]\n\nPolicy: --min-rsa-bits 2048 --require-restrict --forbid-ca\nUse - as one input path for stdin. Exit 0: clear; 1: drift/policy gate; 2: invalid input.")
+		_, err := fmt.Fprintln(stdout, "KeyLedger — offline SSH access inventory and drift checks\n\nkeyledger inspect --input authorized_keys [--format json] [--fail-on-warning]\nkeyledger diff --before old_keys --after new_keys [--format json]\n\nPolicy: --min-rsa-bits 2048 --require-restrict --forbid-ca --require-user-verification\nUse - as one input path for stdin. Exit 0: clear; 1: drift/policy gate; 2: invalid input.")
 		if err != nil {
 			return fail(err)
 		}
@@ -40,6 +40,7 @@ func run(args []string, stdin io.Reader, stdout, stderr io.Writer) int {
 	format := flags.String("format", "text", "text or json")
 	minimum := flags.Int("min-rsa-bits", 2048, "minimum RSA size for warnings")
 	restrict := flags.Bool("require-restrict", false, "require explicit restrict flag")
+	verification := flags.Bool("require-user-verification", false, "require explicit verify-required on security-key records")
 	forbidCA := flags.Bool("forbid-ca", false, "warn on cert-authority records")
 	gate := flags.Bool("fail-on-warning", false, "exit 1 for any policy warning")
 	var input, before, after string
@@ -64,7 +65,7 @@ func run(args []string, stdin io.Reader, stdout, stderr io.Writer) int {
 	if *minimum < 1024 || *minimum > 16384 {
 		return fail(errors.New("min-rsa-bits must be between 1024 and 16384"))
 	}
-	policy := keyledger.Policy{MinRSABits: *minimum, RequireRestrict: *restrict, ForbidCA: *forbidCA}
+	policy := keyledger.Policy{MinRSABits: *minimum, RequireRestrict: *restrict, ForbidCA: *forbidCA, RequireUserVerification: *verification}
 	read := func(path string) (keyledger.Inventory, error) {
 		if path == "" {
 			return keyledger.Inventory{}, errors.New("an explicit input path is required")

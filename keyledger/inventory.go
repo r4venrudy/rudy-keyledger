@@ -29,9 +29,10 @@ type Issue struct {
 }
 
 type Policy struct {
-	MinRSABits      int
-	RequireRestrict bool
-	ForbidCA        bool
+	RequireUserVerification bool
+	MinRSABits              int
+	RequireRestrict         bool
+	ForbidCA                bool
 }
 
 type Inventory struct {
@@ -151,6 +152,15 @@ func review(entries []Entry, policy Policy) []Issue {
 			add("duplicate-key", fmt.Sprintf("same public key also appears at line %d; each option set is retained", previous))
 		} else {
 			seen[entry.Fingerprint] = entry.Line
+		}
+		if policy.RequireUserVerification && (entry.Algorithm == "sk-ssh-ed25519@openssh.com" || entry.Algorithm == "sk-ecdsa-sha2-nistp256@openssh.com") {
+			verified := false
+			for _, option := range entry.Options {
+				verified = verified || (option.Name == "verify-required" && option.Value == nil)
+			}
+			if !verified {
+				add("sk-verification-required", "policy requires an explicit verify-required flag on security keys")
+			}
 		}
 		restricted := false
 		singletons := map[string]bool{}

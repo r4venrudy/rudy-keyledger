@@ -8,7 +8,7 @@
 
 A key can keep the same fingerprint while losing its forced command or forwarding restrictions. KeyLedger compares the key **and every ordered option set**, retaining duplicate records. It reports the before/after lines so an operator can review precisely what changed.
 
-**v0.1.0-preview · Go · MIT · Standard library only**
+**v0.2.0-preview · Go · MIT · Standard library only**
 
 ## Capabilities
 
@@ -23,7 +23,7 @@ A key can keep the same fingerprint while losing its forced command or forwardin
 
 ## Quick start
 
-Download the archive for your platform from the [preview release](https://github.com/r4venrudy/rudy-keyledger/releases/tag/v0.1.0-preview). Compare its SHA-256 with `SHA256SUMS.txt`, extract it, then run `bin/keyledger` (`bin/keyledger.exe` on Windows). The archive includes these examples.
+Download the archive for your platform from the [preview release](https://github.com/r4venrudy/rudy-keyledger/releases/tag/v0.2.0-preview). Compare its SHA-256 with `SHA256SUMS.txt`, extract it, then run `bin/keyledger` (`bin/keyledger.exe` on Windows). The archive includes these examples.
 
 ```sh
 bin/keyledger inspect --input examples/before.keys --format json
@@ -88,6 +88,8 @@ delta := keyledger.Compare(old, next)
 ```
 
 Import `github.com/r4venrudy/rudy-keyledger/keyledger`. `Policy.MinRSABits` must be zero (the 2048-bit default) or between 1024 and 16384. Invalid policy settings fail before reading input. `Read` returns an error for the entire file if any record is unsupported or malformed. `Compare` expects inventories produced by successful `Read` calls. JSON schemas are `rudy.keyledger.inventory/v1` and `rudy.keyledger.diff/v1`.
+
+`--require-user-verification` (library `Policy.RequireUserVerification`) warns with `sk-verification-required` when a supported security-key record lacks a bare `verify-required` flag. Ordinary keys are unaffected; `--fail-on-warning` gates the prospective inventory. This requests the OpenSSH per-signature verification policy, not proof of hardware or multi-factor authentication. See [the OpenSSH authorized_keys options](https://github.com/openssh/openssh-portable/blob/master/sshd.8).
 
 ## Security keys
 

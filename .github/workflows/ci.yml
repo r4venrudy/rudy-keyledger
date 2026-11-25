@@ -80,7 +80,7 @@ jobs:
           set -euo pipefail
           (cd dist && sha256sum -c SHA256SUMS.txt)
           mkdir installed
-          tar -xzf dist/keyledger-0.1.0-preview-linux-x64.tar.gz -C installed
+          tar -xzf dist/keyledger-0.2.0-preview-linux-x64.tar.gz -C installed
           python tests/integration.py installed/bin/keyledger installed
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
         with:
